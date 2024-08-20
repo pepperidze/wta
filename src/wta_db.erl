@@ -109,7 +109,7 @@ card_is_valid_to_assign(CardUID) ->
 -spec card_assign(EmployeeId, CardUID) -> Result when
     EmployeeId :: wta:employee_id(),
     CardUID :: wta:uid(),
-    Result :: ok | {error, not_updated} | {error, Error :: term()}.
+    Result :: ok | {error, not_updated}.
 card_assign(EmployeeId, CardUID) ->
     Sql = "UPDATE public.cards SET
            employee_id = $1,
@@ -268,9 +268,13 @@ work_time_get_exclusion(EmployeeId) ->
     Offset :: non_neg_integer() | null,
     Result :: {ok, Response :: [tuple()]}.
 work_time_history(Period, EmployeeId, Limit, Offset) ->
-    Sql = "SELECT l.employee_id, l.date::TEXT, l.start_time::TEXT, l.end_time::TEXT, (l.end_time - l.start_time)::TEXT AS logged_time,
-               l.ex_type, l.ex_start_time::TEXT, l.ex_end_time::TEXT, (l.ex_end_time - l.ex_start_time)::TEXT AS ex_time,
-               s.is_free_schedule, s.work_days, s.start_time::TEXT, s.end_time::TEXT, (s.end_time - s.start_time)::TEXT AS planned_time
+    Sql = "SELECT l.employee_id, l.date::TEXT, l.start_time::TEXT, l.end_time::TEXT,
+               (l.end_time - l.start_time)::TEXT AS logged_time,
+               l.ex_type, l.ex_start_time::TEXT, l.ex_end_time::TEXT,
+               (l.ex_end_time - l.ex_start_time)::TEXT AS ex_time,
+               s.is_free_schedule, s.work_days, s.start_time::TEXT, s.end_time::TEXT,
+               (CASE WHEN check_if_work_day(l.ex_type, l.date, s.work_days)
+                   THEN s.end_time - s.start_time END)::TEXT AS planned_time
            FROM public.logs l
            INNER JOIN public.schedules s
                ON l.employee_id = s.employee_id
