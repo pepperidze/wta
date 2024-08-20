@@ -1,0 +1,9 @@
+CREATE TABLE public.employees (
+    id SERIAL PRIMARY KEY,
+    last_name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    middle_name VARCHAR(255) NOT NULL,
+    contract_id INTEGER NOT NULL UNIQUE CHECK (contract_id > 0),
+    last_update TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP(0),
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP(0)
+);

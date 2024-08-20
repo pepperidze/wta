@@ -1,0 +1,8 @@
+*.plt
+*.d
+
+.idea/
+.erlang.mk/
+_rel/
+deps/
+ebin/

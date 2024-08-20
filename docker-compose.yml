@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  db:
+    container_name: db
+    networks:
+      - custom_network
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - ./priv/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+  eunit:
+    container_name: eunit
+    networks:
+      - custom_network
+    build:
+      dockerfile: Dockerfile
+    image: wta:tests
+    depends_on:
+      - db
+    working_dir: /data
+    command: make eunit
+    volumes:
+      - ./:/data
+networks:
+  custom_network:
+    driver: bridge
