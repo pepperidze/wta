@@ -276,7 +276,7 @@ work_time_history(Period, EmployeeId, Limit, Offset) ->
                (CASE WHEN check_if_work_day(l.ex_type, l.date, s.work_days)
                    THEN s.end_time - s.start_time END)::TEXT AS planned_time
            FROM public.logs l
-           INNER JOIN public.schedules s
+           LEFT JOIN public.schedules s
                ON l.employee_id = s.employee_id
            WHERE CASE WHEN $1 THEN l.date <= CURRENT_DATE
                ELSE l.date > CURRENT_DATE - INTERVAL '1 " ++ period(Period) ++ "' AND l.date <= CURRENT_DATE END "
@@ -297,7 +297,7 @@ work_time_history_sql_part(null, Limit, Offset) ->
     Offset :: non_neg_integer() | null,
     Result :: {ok, Response :: [tuple()]}.
 work_time_statistics(Period, EmployeeId, Limit, Offset) ->
-    Sql = "SELECT e.id,
+    Sql = "SELECT l.employee_id,
                SUM(CASE WHEN check_if_work_day(l.ex_type, l.date, s.work_days)
                    THEN s.end_time - s.start_time END)::TEXT AS planned_time,
                SUM(l.end_time - l.start_time)::TEXT AS logged_time,
@@ -309,11 +309,9 @@ work_time_statistics(Period, EmployeeId, Limit, Offset) ->
                    AND s.is_free_schedule = false THEN 1 END) AS leave_early,
                COUNT(CASE WHEN (l.end_time < s.end_time) AND l.ex_type = 'leave_early'
                    AND l.end_time >= l.ex_start_time THEN 1 END) AS leave_early_exclusion
-           FROM public.employees e
-           INNER JOIN public.logs l
-               ON e.id = l.employee_id
-           INNER JOIN public.schedules s
-               ON e.id = s.employee_id
+           FROM public.logs l
+           LEFT JOIN public.schedules s
+               ON l.employee_id = s.employee_id
            WHERE CASE WHEN $1 THEN l.date <= CURRENT_DATE
                ELSE l.date > CURRENT_DATE - INTERVAL '1 " ++ period(Period) ++ "' AND l.date <= CURRENT_DATE END "
            ++ work_time_statistics_sql_part(EmployeeId, Limit, Offset),
@@ -322,9 +320,9 @@ work_time_statistics(Period, EmployeeId, Limit, Offset) ->
     {ok, Rows}.
 
 work_time_statistics_sql_part(EmployeeId, null, null) ->
-    io_lib:format("AND e.id = ~B GROUP BY e.id;", [EmployeeId]);
+    io_lib:format("AND l.employee_id = ~B GROUP BY l.employee_id;", [EmployeeId]);
 work_time_statistics_sql_part(null, Limit, Offset) ->
-    io_lib:format("GROUP BY e.id ORDER BY e.id LIMIT ~B OFFSET ~B;", [Limit, Offset]).
+    io_lib:format("GROUP BY l.employee_id ORDER BY l.employee_id LIMIT ~B OFFSET ~B;", [Limit, Offset]).
 
 %% ====================================================================
 %% Internal functions
