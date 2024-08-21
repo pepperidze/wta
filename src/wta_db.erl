@@ -278,8 +278,8 @@ work_time_history(Period, EmployeeId, Limit, Offset) ->
            FROM public.logs l
            INNER JOIN public.schedules s
                ON l.employee_id = s.employee_id
-           WHERE CASE WHEN $1 THEN l.date < CURRENT_DATE
-               ELSE l.date >= CURRENT_DATE - INTERVAL '1 " ++ period(Period) ++ "' AND l.date < CURRENT_DATE END "
+           WHERE CASE WHEN $1 THEN l.date <= CURRENT_DATE
+               ELSE l.date > CURRENT_DATE - INTERVAL '1 " ++ period(Period) ++ "' AND l.date <= CURRENT_DATE END "
            ++ work_time_history_sql_part(EmployeeId, Limit, Offset),
     Args = [use_all_period(Period)],
     {ok, _Columns, Rows} = pgapp:equery(Sql, Args),
@@ -314,8 +314,8 @@ work_time_statistics(Period, EmployeeId, Limit, Offset) ->
                ON e.id = l.employee_id
            INNER JOIN public.schedules s
                ON e.id = s.employee_id
-           WHERE CASE WHEN $1 THEN l.date < CURRENT_DATE
-               ELSE l.date >= CURRENT_DATE - INTERVAL '1 " ++ period(Period) ++ "' AND l.date < CURRENT_DATE END "
+           WHERE CASE WHEN $1 THEN l.date <= CURRENT_DATE
+               ELSE l.date > CURRENT_DATE - INTERVAL '1 " ++ period(Period) ++ "' AND l.date <= CURRENT_DATE END "
            ++ work_time_statistics_sql_part(EmployeeId, Limit, Offset),
     Args = [use_all_period(Period)],
     {ok, _Columns, Rows} = pgapp:equery(Sql, Args),
